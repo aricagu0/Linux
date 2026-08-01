@@ -12,12 +12,13 @@
 5. [파이썬 키보드 비동기 입력 코드 (Getchar) 해설](#5-파이썬-키보드-비동기-입력-코드-getchar-해설)
 6. [리눅스(Ubuntu) 유용한 팁 및 터미널 사용법](#6-리눅스ubuntu-유용한-팁-및-터미널-사용법)
 7. [Git & GitHub 최초 생성 및 업로드 실습 가이드](#7-git--github-최초-생성-및-업로드-실습-가이드)
+8. [Git 비밀번호(토큰) 매번 안 치게 자동 저장 설정](#8-git-비밀번호토큰-매번-안-치게-자동-저장-설정)
 
 ---
 
 ## 1. ROS 2 setup.bash 스크립트 심층 분석
 
-### 💻 스크립트 소스 코드
+### 💻 소스 코드
 ```bash
 # copied from ament_package/template/prefix_level/setup.bash
 
@@ -194,7 +195,25 @@ git push -u origin main --force
 
 > **🔑 인증 시 주의사항**: Password에 일반 깃허브 비밀번호를 치면 안 되고, 깃허브 웹사이트 `Settings -> Developer settings -> Personal access tokens (classic)` 에서 생성한 **개인 토큰(`ghp_...`)**을 붙여넣어야 푸시가 성공함.
 
-### 🔄 향후 파일 수정 후 깃허브 업데이트 3단계
+---
+
+## 8. Git 비밀번호(토큰) 매번 안 치게 자동 저장 설정
+
+`git push`를 할 때마다 깃허브 비밀번호나 개인 액세스 토큰(PAT)을 매번 묻는 문제를 해결하는 방법입니다.
+
+### 🔑 1회 입력 후 영구 자동 저장 명령어
+터미널에 아래 명령어를 단 한 번만 실행합니다.
+
+```bash
+git config --global credential.helper store
+```
+
+### 💡 작동 원리 및 사용법
+1. 위 명령어를 실행한 후, `git push` 시 나오는 로그인 요청(`Username`, `Password`)에 아이디와 개인 토큰을 **마지막으로 딱 한 번만 입력**합니다.
+2. 비밀번호(토큰) 정보가 내 컴퓨터 내부에 안전하게 영구 저장됩니다.
+3. 그 이후부터는 `git push` 실행 시 로그인창이 뜨지 않고 **자동으로 0초 만에 깃허브로 업로드**됩니다.
+
+### 🔄 향후 파일 수정 후 깃허브 업데이트 3단계 (자동 로그인 적용됨)
 ```bash
 git add .
 git commit -m "수정 내용 메모"
