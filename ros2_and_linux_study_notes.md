@@ -13,6 +13,7 @@
 6. [리눅스(Ubuntu) 유용한 팁 및 터미널 사용법](#6-리눅스ubuntu-유용한-팁-및-터미널-사용법)
 7. [Git & GitHub 최초 생성 및 업로드 실습 가이드](#7-git--github-최초-생성-및-업로드-실습-가이드)
 8. [Git 비밀번호(토큰) 매번 안 치게 자동 저장 설정](#8-git-비밀번호토큰-매번-안-치게-자동-저장-설정)
+9. [colcon build --symlink-install 심층 가이드 & 개발 워크플로우](#9-colcon-build---symlink-install-심층-가이드--개발-워크플로우)
 
 ---
 
@@ -213,9 +214,33 @@ git config --global credential.helper store
 2. 비밀번호(토큰) 정보가 내 컴퓨터 내부에 안전하게 영구 저장됩니다.
 3. 그 이후부터는 `git push` 실행 시 로그인창이 뜨지 않고 **자동으로 0초 만에 깃허브로 업로드**됩니다.
 
-### 🔄 향후 파일 수정 후 깃허브 업데이트 3단계 (자동 로그인 적용됨)
+---
+
+## 9. colcon build --symlink-install 심층 가이드 & 개발 워크플로우
+
+### ❓ colcon build 에 source 가 자동 포함되지 않는 이유 (리눅스 원리)
+* `colcon build`는 하위(자식) 프로세스로 구동되어 **현재 켜져 있는 부모 터미널의 환경 변수를 직접 변경할 수 없음.**
+* `colcon build`는 하드디스크에 `install/setup.bash` 파일을 작성하는 역할이며, `source`는 생성된 파일 내용을 현재 터미널 메모리에 적용하는 명령어임.
+
+### ⚡ 일반 빌드 vs 심볼릭 링크 빌드 비교
+| 구분 | 일반 빌드 (`colcon build`) | 심볼릭 링크 빌드 (`colcon build --symlink-install`) |
+| :--- | :--- | :--- |
+| **동작 방식** | `src` 코드를 `install` 폴더로 복사 | `install` 폴더에 `src` 파일로의 **바로가기(링크)** 생성 |
+| **코드 수정 후** | **매번 다시 `colcon build` 실행 필수** | **빌드 안 함, source 안 함, 즉시 적용!** |
+| **개발 루틴** | 코드 수정 ➔ 빌드 ➔ source ➔ 실행 | 코드 수정 ➔ **[저장] ➔ 즉시 `ros2 run` 실행** |
+
+### 🛠️ .bashrc 단축키(Alias) 설정 추천
+`~/.bashrc` 파일 맨 아래에 등록하여 사용:
 ```bash
-git add .
-git commit -m "수정 내용 메모"
-git push
+# 단순 심볼릭 링크 빌드 단축키
+alias cb='colcon build --symlink-install'
+
+# 빌드 및 자동 source 합성 단축키
+alias cbs='colcon build --symlink-install && source install/setup.bash'
 ```
+
+### 💡 파이썬 개발 시 source 및 build 생략 조건 요약
+* ⭕ **`build`도 `source`도 안 해도 되는 경우**:
+  * 이미 `--symlink-install`로 빌드해 두었고, 기존 `.py` 파일의 내부 코드 로직만 수정했을 때. (저장 후 바로 `ros2 run` 가능)
+* 🔴 **`build`와 `source`를 다시 해야 하는 경우**:
+  * 아예 새로운 `.py` 파일을 추가했거나, `setup.py`의 `entry_points`(노드 실행 이름)를 새로 등록했을 때.
